@@ -1,7 +1,7 @@
 'use client';
 
 import { UploadCloud, Settings2, Image as ImageIcon, Sparkles } from 'lucide-react';
-import { ChangeEvent } from 'react';
+import { ChangeEvent, useMemo } from 'react';
 
 interface ControlPanelProps {
   maxColors: number;
@@ -44,6 +44,13 @@ export function ControlPanel({
   outlineThreshold,
   setOutlineThreshold
 }: ControlPanelProps) {
+  
+  const parsedCount = useMemo(() => {
+    if (!lockedColorsText) return 0;
+    const matches = lockedColorsText.match(/#[0-9A-Fa-f]{6}/g);
+    if (!matches) return 0;
+    return new Set(matches.map(c => c.toLowerCase())).size;
+  }, [lockedColorsText]);
   
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -153,17 +160,32 @@ export function ControlPanel({
 
           {/* Mandatory Colors Input */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-zinc-300">
-              Mandatory Colors (Optional)
-            </label>
+            <div className="flex justify-between items-center text-sm font-medium text-zinc-300">
+              <span>Mandatory Colors (Optional)</span>
+              <span className={`text-xs font-mono transition-colors ${
+                parsedCount > maxColors ? 'text-rose-400 font-bold animate-pulse' : 'text-zinc-500'
+              }`}
+              title={parsedCount > maxColors ? "Excede el límite de Max Colors (se recortarán los excedentes)" : ""}
+              >
+                {parsedCount} / {maxColors}
+              </span>
+            </div>
             <textarea
               value={lockedColorsText}
               onChange={(e) => setLockedColorsText(e.target.value)}
               placeholder="#FF0000, #00FF00, #0000FF"
-              className="w-full h-16 bg-zinc-950 border border-zinc-800 text-zinc-200 text-xs rounded-md p-2 outline-none focus:border-indigo-500 resize-none font-mono"
+              className={`w-full h-16 bg-zinc-950 text-zinc-200 text-xs rounded-md p-2 outline-none resize-none font-mono transition-all ${
+                parsedCount > maxColors 
+                  ? 'border-rose-900/60 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20' 
+                  : 'border-zinc-800 focus:border-indigo-500'
+              }`}
             />
-            <p className="text-[10px] text-zinc-500">
-              Comma-separated hex colors to force into the final palette.
+            <p className={`text-[10px] transition-colors ${
+              parsedCount > maxColors ? 'text-rose-400/85' : 'text-zinc-500'
+            }`}>
+              {parsedCount > maxColors 
+                ? '⚠️ Los colores que superen el límite configurado serán descartados.' 
+                : 'Comma-separated hex colors to force into the final palette.'}
             </p>
           </div>
 

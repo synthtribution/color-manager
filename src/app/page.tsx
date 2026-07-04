@@ -296,6 +296,27 @@ export default function Home() {
     });
   }, [customPaletteHex, palette]);
 
+  const colorCounts = useMemo(() => {
+    if (!quantizedImageData) return {};
+    const counts: { [hex: string]: number } = {};
+    const data = quantizedImageData.data;
+    
+    const rgbToHex = (r: number, g: number, b: number) => {
+      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    };
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const a = data[i + 3];
+      if (a < 10) continue; // Ignore transparent
+      const hex = rgbToHex(r, g, b).toLowerCase();
+      counts[hex] = (counts[hex] || 0) + 1;
+    }
+    return counts;
+  }, [quantizedImageData]);
+
   return (
     <main className="flex h-screen w-full bg-black text-zinc-200 overflow-hidden font-sans">
       <ControlPanel 
@@ -375,7 +396,7 @@ export default function Home() {
           />
         </div>
         
-        <Distributor palette={activePalette} />
+        <Distributor palette={activePalette} colorCounts={colorCounts} />
       </div>
 
       {/* Recommendations Modal */}
